@@ -481,6 +481,9 @@ arrow::Status VeloxShuffleWriter::splitFixedWidthValueBuffer(const facebook::vel
     const auto& dstAddrs = partitionFixedWidthValueAddrs_[col];
 
     switch (arrow::bit_width(arrowColumnTypes_[colIdx]->id())) {
+      case 0: // arrow::NullType::type_id:
+        // No value buffer created for NullType.
+        break;
       case 1: // arrow::BooleanType::type_id:
         RETURN_NOT_OK(splitBoolType(srcAddr, dstAddrs));
         break;
@@ -937,6 +940,21 @@ arrow::Status VeloxShuffleWriter::allocatePartitionBuffer(uint32_t partitionId, 
         buffers = {std::move(validityBuffer), std::move(lengthBuffer), std::move(valueBuffer)};
         break;
       }
+      case arrow::StructType::type_id:
+      case arrow::MapType::type_id:
+      case arrow::ListType::type_id:
+        break;
+      case arrow::NullType::type_id: {
+        std::shared_ptr<arrow::ResizableBuffer> validityBuffer{};
+        ARROW_ASSIGN_OR_RAISE(validityBuffer, arrow::AllocateResizableBuffer(newSize, partitionBufferPool_.get()));
+        // initialize all as false.
+        memset(validityBuffer->mutable_data(), 0, validityBuffer->capacity());
+        partitionValidityAddrs_[i][partitionId] = validityBuffer->mutable_data();
+        // No need to create valueBuffer for NullType.
+        partitionBuffers_[i][partitionId] = {std::move(validityBuffer), nullptr};
+        break;
+      }
+
       default: { // fixed-width types
         std::shared_ptr<arrow::ResizableBuffer> valueBuffer{};
         ARROW_ASSIGN_OR_RAISE(
@@ -1047,6 +1065,26 @@ arrow::Result<std::vector<std::shared_ptr<arrow::Buffer>>> VeloxShuffleWriter::a
       case arrow::MapType::type_id:
       case arrow::ListType::type_id:
         break;
+      case arrow::NullType::type_id: {
+        auto& buffers = partitionBuffers_[fixedWidthIdx][partitionId];
+        // validity buffer
+        if (buffers[kValidityBufferIndex] != nullptr) {
+          auto validityBufferSize = arrow::bit_util::BytesForBits(numRows);
+          if (reuseBuffers) {
+            allBuffers.push_back(
+                arrow::SliceBuffer(buffers[kValidityBufferIndex], 0, arrow::bit_util::BytesForBits(numRows)));
+          } else {
+            RETURN_NOT_OK(buffers[kValidityBufferIndex]->Resize(validityBufferSize, true));
+            allBuffers.push_back(std::move(buffers[kValidityBufferIndex]));
+          }
+        } else {
+          allBuffers.push_back(nullptr);
+        }
+        // value buffer is nullptr
+        allBuffers.push_back(nullptr);
+        fixedWidthIdx++;
+        break;
+      }
       default: {
         auto& buffers = partitionBuffers_[fixedWidthIdx][partitionId];
         // validity buffer
