@@ -152,7 +152,7 @@ std::shared_ptr<Datasource> VeloxRuntime::createDatasource(
     const std::string& filePath,
     MemoryManager* memoryManager,
     std::shared_ptr<arrow::Schema> schema) {
-  auto veloxPool = getAggregateVeloxPool(memoryManager);
+  auto veloxPool = getLeafVeloxPool(memoryManager);
   return std::make_shared<VeloxParquetDatasource>(filePath, veloxPool, schema);
 }
 

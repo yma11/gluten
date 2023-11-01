@@ -32,6 +32,10 @@
 #include "operators/writer/Datasource.h"
 
 #include "velox/common/file/FileSystems.h"
+#ifdef ENABLE_S3
+#include "velox/connectors/hive/storage_adapters/s3fs/S3FileSystem.h"
+#include "velox/connectors/hive/storage_adapters/s3fs/S3Util.h"
+#endif
 #ifdef ENABLE_HDFS
 #include "velox/connectors/hive/storage_adapters/hdfs/HdfsFileSystem.h"
 #include "velox/connectors/hive/storage_adapters/hdfs/HdfsUtil.h"
