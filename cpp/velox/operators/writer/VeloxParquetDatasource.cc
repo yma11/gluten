@@ -48,7 +48,7 @@ void VeloxParquetDatasource::init(const std::unordered_map<std::string, std::str
     auto fileSystem = getFileSystem(filePath_, nullptr);
     auto* s3FileSystem = dynamic_cast<filesystems::S3FileSystem*>(fileSystem.get());
     sink_ = std::make_unique<dwio::common::WriteFileSink>(
-        s3FileSystem->openFileForWrite(filePath_, {{}, pool_.get()}), filePath_);
+        s3FileSystem->openFileForWrite(filePath_, {{}, s3SinkPool_.get()}), filePath_);
     std::cout << "!!!!!!!S3 file sink successfully created." << std::endl;
 #else
     throw std::runtime_error(
