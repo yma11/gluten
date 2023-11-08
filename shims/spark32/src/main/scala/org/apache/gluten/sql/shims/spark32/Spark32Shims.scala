@@ -30,7 +30,7 @@ import org.apache.spark.sql.catalyst.csv.CSVOptions
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, BinaryExpression, Expression}
 import org.apache.spark.sql.catalyst.expressions.aggregate.TypedImperativeAggregate
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.catalyst.plans.physical.{Distribution, HashClusteredDistribution}
+import org.apache.spark.sql.catalyst.plans.physical.{Distribution, StatefulOpClusteredDistribution}
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.catalyst.util.CaseInsensitiveMap
 import org.apache.spark.sql.connector.catalog.Table
@@ -56,7 +56,8 @@ class Spark32Shims extends SparkShims {
   override def getDistribution(
       leftKeys: Seq[Expression],
       rightKeys: Seq[Expression]): Seq[Distribution] = {
-    HashClusteredDistribution(leftKeys) :: HashClusteredDistribution(rightKeys) :: Nil
+    val dist = StatefulOpClusteredDistribution(leftKeys, 0)
+    dist :: StatefulOpClusteredDistribution(rightKeys, 0) :: Nil
   }
 
   override def scalarExpressionMappings: Seq[Sig] = Seq(Sig[Empty2Null](ExpressionNames.EMPTY2NULL))
