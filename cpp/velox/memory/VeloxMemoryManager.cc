@@ -145,7 +145,7 @@ VeloxMemoryManager::VeloxMemoryManager(
   velox::memory::MemoryManagerOptions mmOptions{
       .alignment = velox::memory::MemoryAllocator::kMaxAlignment,
       .trackDefaultUsage = true, // memory usage tracking
-      .checkUsageLeak = true, // leak check
+      .checkUsageLeak = false, // leak check
       .debugEnabled = false, // debug
       .coreOnAllocationFailureEnabled = false,
       .allocatorCapacity = velox::memory::kMaxMemory,
