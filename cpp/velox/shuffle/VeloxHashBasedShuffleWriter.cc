@@ -31,6 +31,7 @@
 #include "velox/type/Type.h"
 #include "velox/vector/BaseVector.h"
 #include "velox/vector/ComplexVector.h"
+#include <typeinfo>
 
 #if defined(__x86_64__)
 #include <immintrin.h>
@@ -838,7 +839,6 @@ uint32_t VeloxHashBasedShuffleWriter::calculatePartitionBufferSize(
       auto stringLen = (isNull - 1) & stringView.size();
       binarySizeBytes += stringLen;
     }
-
     binaryArrayTotalSizeBytes_[i] += binarySizeBytes;
     binaryArrayAvgBytesPerRow[i] = binaryArrayTotalSizeBytes_[i] / (totalInputNumRows_ + numRows);
     bytesPerRow += binaryArrayAvgBytesPerRow[i];
