@@ -30,6 +30,7 @@
 #include "velox/type/Type.h"
 #include "velox/vector/BaseVector.h"
 #include "velox/vector/ComplexVector.h"
+#include <typeinfo>
 
 #if defined(__x86_64__)
 #include <immintrin.h>
@@ -855,7 +856,6 @@ uint16_t VeloxShuffleWriter::calculatePartitionBufferSize(const facebook::velox:
     for (auto& buffer : column->stringBuffers()) {
       binarySizeBytes += buffer->size();
     }
-
     binaryArrayTotalSizeBytes_[i] += binarySizeBytes;
     binaryArrayAvgBytesPerRow[i] = binaryArrayTotalSizeBytes_[i] / (totalInputNumRows_ + numRows);
     bytesPerRow += binaryArrayAvgBytesPerRow[i];
