@@ -42,6 +42,7 @@ class GlutenInsertSuite
 
   override def sparkConf: SparkConf = {
     super.sparkConf.set("spark.sql.leafNodeDefaultParallelism", "1")
+    super.sparkConf.set("spark.gluten.sql.complexType.scan.fallback.enabled", "false")
   }
 
   override def beforeAll(): Unit = {
