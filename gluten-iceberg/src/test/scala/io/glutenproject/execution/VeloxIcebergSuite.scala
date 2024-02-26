@@ -41,6 +41,26 @@ class VeloxIcebergSuite extends WholeStageTransformerSuite {
       .set("spark.sql.catalog.spark_catalog.warehouse", s"file://$rootPath/tpch-data-iceberg-velox")
   }
 
+
+  test("iceberg: partition filters") {
+    spark.sql("DROP TABLE IF EXISTS iceberg_pf")
+    spark.sql(
+      s"""
+         |create table iceberg_pf (id int, name string) using iceberg partitioned by (name)
+         |""".stripMargin)
+    spark.sql(
+      s"""
+         |insert into iceberg_pf values (1, "v1"), (2, "v2"), (3, "v1"), (4, "v2")
+         |""".stripMargin)
+    val df = runQueryAndCompare("select * from iceberg_pf where name = 'v1'") { checkOperatorMatch[IcebergScanTransformer] }
+    val icebergScanTransformer = df.queryExecution.executedPlan.collect {
+      case f: IcebergScanTransformer => f
+    }.head
+    // No data filters as only partition filters exist
+    assert(icebergScanTransformer.filterExprs().size == 0)
+    checkLengthAndPlan(df, 2)
+  }
+
   test("iceberg transformer exists") {
     spark.sql("""
                 |create table iceberg_tb using iceberg as
