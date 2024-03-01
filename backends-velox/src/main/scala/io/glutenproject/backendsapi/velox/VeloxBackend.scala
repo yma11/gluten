@@ -94,7 +94,6 @@ object BackendSettings extends BackendSettingsApi {
         structType.simpleString + " is forced to fallback."
     }
     val orcTypeValidatorWithComplexTypeFallback: PartialFunction[StructField, String] = {
-      case StructField(_, ByteType, _, _) => "ByteType not support"
       case StructField(_, arrayType: ArrayType, _, _) =>
         arrayType.simpleString + " is forced to fallback."
       case StructField(_, mapType: MapType, _, _) =>
