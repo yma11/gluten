@@ -67,14 +67,12 @@ case class MergeTwoPhasesHashBaseAggregate(session: SparkSession) extends Rule[S
       plan.transformDown {
         case hashAgg @ HashAggregateExec(
               _,
-              isStreaming,
-              _,
               _,
               aggregateExpressions,
               aggregateAttributes,
               _,
               resultExpressions,
-              child: HashAggregateExec) if !isStreaming && isPartialAgg(child, hashAgg) =>
+              child: HashAggregateExec) if isPartialAgg(child, hashAgg) =>
           // convert to complete mode aggregate expressions
           val completeAggregateExpressions = aggregateExpressions.map(_.copy(mode = Complete))
           hashAgg.copy(
@@ -84,17 +82,15 @@ case class MergeTwoPhasesHashBaseAggregate(session: SparkSession) extends Rule[S
             initialInputBufferOffset = 0,
             child = child.child
           )
+
         case objectHashAgg @ ObjectHashAggregateExec(
-              _,
-              isStreaming,
               _,
               _,
               aggregateExpressions,
               aggregateAttributes,
               _,
               resultExpressions,
-              child: ObjectHashAggregateExec)
-            if !isStreaming && isPartialAgg(child, objectHashAgg) =>
+              child: ObjectHashAggregateExec) if isPartialAgg(child, objectHashAgg) =>
           // convert to complete mode aggregate expressions
           val completeAggregateExpressions = aggregateExpressions.map(_.copy(mode = Complete))
           objectHashAgg.copy(
@@ -106,15 +102,13 @@ case class MergeTwoPhasesHashBaseAggregate(session: SparkSession) extends Rule[S
           )
         case sortAgg @ SortAggregateExec(
               _,
-              isStreaming,
-              _,
               _,
               aggregateExpressions,
               aggregateAttributes,
               _,
               resultExpressions,
               child: SortAggregateExec)
-            if replaceSortAggWithHashAgg && !isStreaming && isPartialAgg(child, sortAgg) =>
+            if replaceSortAggWithHashAgg && isPartialAgg(child, sortAgg) =>
           // convert to complete mode aggregate expressions
           val completeAggregateExpressions = aggregateExpressions.map(_.copy(mode = Complete))
           sortAgg.copy(
