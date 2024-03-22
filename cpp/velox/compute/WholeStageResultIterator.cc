@@ -49,6 +49,10 @@ const std::string kMaxSpillFileSize = "spark.gluten.sql.columnar.backend.velox.m
 const std::string kMinSpillRunSize = "spark.gluten.sql.columnar.backend.velox.minSpillRunSize";
 const std::string kSpillStartPartitionBit = "spark.gluten.sql.columnar.backend.velox.spillStartPartitionBit";
 const std::string kSpillPartitionBits = "spark.gluten.sql.columnar.backend.velox.spillPartitionBits";
+const std::string kMaxSpillRunRows = "spark.gluten.sql.columnar.backend.velox.MaxSpillRunRows";
+const std::string kMaxSpillBytes = "spark.gluten.sql.columnar.backend.velox.MaxSpillBytes";
+const std::string kSpillWriteBufferSize = "spark.gluten.sql.columnar.backend.velox.spillWriteBufferSize";
+
 const std::string kSpillableReservationGrowthPct =
     "spark.gluten.sql.columnar.backend.velox.spillableReservationGrowthPct";
 const std::string kSpillCompressionKind = "spark.io.compression.codec";
@@ -514,6 +518,12 @@ std::unordered_map<std::string, std::string> WholeStageResultIterator::getQueryC
     configs[velox::core::QueryConfig::kMaxSpillLevel] = std::to_string(veloxCfg_->get<int32_t>(kMaxSpillLevel, 4));
     configs[velox::core::QueryConfig::kMaxSpillFileSize] =
         std::to_string(veloxCfg_->get<uint64_t>(kMaxSpillFileSize, 20L * 1024 * 1024));
+    configs[velox::core::QueryConfig::kMaxSpillRunRows] =
+        std::to_string(veloxCfg_->get<uint64_t>(kMaxSpillRunRows, 12L * 1024 * 1024));
+    configs[velox::core::QueryConfig::kMaxSpillBytes] =
+        std::to_string(veloxCfg_->get<uint64_t>(kMaxSpillBytes, 107374182400LL));
+    configs[velox::core::QueryConfig::kSpillWriteBufferSize] =
+        std::to_string(veloxCfg_->get<uint64_t>(kSpillWriteBufferSize, 4L * 1024 * 1024));
     configs[velox::core::QueryConfig::kMinSpillRunSize] =
         std::to_string(veloxCfg_->get<uint64_t>(kMinSpillRunSize, 256 << 20));
     configs[velox::core::QueryConfig::kSpillStartPartitionBit] =
