@@ -34,6 +34,12 @@ const bool kVeloxFileHandleCacheEnabledDefault = false;
 // Log granularity of AWS C++ SDK
 const std::string kVeloxAwsSdkLogLevel = "spark.gluten.velox.awsSdkLogLevel";
 const std::string kVeloxAwsSdkLogLevelDefault = "FATAL";
+// Retry mode for AWS s3
+const std::string kVeloxS3RetryMode = "spark.gluten.velox.fs.s3a.retry.mode";
+const std::string kVeloxS3RetryModeDefault = "legacy";
+// Connection timeout for AWS s3
+const std::string kVeloxS3ConnectTimeout = "spark.gluten.velox.fs.s3a.connect.timeout";
+const std::string kVeloxS3ConnectTimeoutDefault = "1s";
 } // namespace
 
 namespace gluten {
@@ -65,6 +71,10 @@ std::shared_ptr<facebook::velox::core::MemConfigMutable> getHiveConfig(
   bool useInstanceCredentials = conf->get<bool>("spark.hadoop.fs.s3a.use.instance.credentials", false);
   std::string iamRole = conf->get<std::string>("spark.hadoop.fs.s3a.iam.role", "");
   std::string iamRoleSessionName = conf->get<std::string>("spark.hadoop.fs.s3a.iam.role.session.name", "");
+  std::string retryMaxAttempts = conf->get<std::string>("spark.hadoop.fs.s3a.retry.limit", "3");
+  std::string retryMode = conf->get<std::string>(kVeloxS3RetryMode, kVeloxS3RetryModeDefault);
+  std::string maxConnections = conf->get<std::string>("spark.hadoop.fs.s3a.connection.maximum", "96");
+  std::string connectTimeout = conf->get<std::string>(kVeloxS3ConnectTimeout, kVeloxS3ConnectTimeoutDefault);
 
   std::string awsSdkLogLevel = conf->get<std::string>(kVeloxAwsSdkLogLevel, kVeloxAwsSdkLogLevelDefault);
 
@@ -79,6 +89,14 @@ std::shared_ptr<facebook::velox::core::MemConfigMutable> getHiveConfig(
   const char* envAwsEndpoint = std::getenv("AWS_ENDPOINT");
   if (envAwsEndpoint != nullptr) {
     awsEndpoint = std::string(envAwsEndpoint);
+  }
+  const char* envRetryMaxAttempts = std::getenv("AWS_MAX_ATTEMPTS");
+  if (envRetryMaxAttempts != nullptr) {
+    retryMaxAttempts = std::string(envRetryMaxAttempts);
+  }
+  const char* envRetryMode = std::getenv("AWS_RETRY_MODE");
+  if (envRetryMode != nullptr) {
+    retryMode = std::string(envRetryMode);
   }
 
   if (useInstanceCredentials) {
@@ -100,6 +118,10 @@ std::shared_ptr<facebook::velox::core::MemConfigMutable> getHiveConfig(
   hiveConf->setValue(
       facebook::velox::connector::hive::HiveConfig::kS3PathStyleAccess, pathStyleAccess ? "true" : "false");
   hiveConf->setValue(facebook::velox::connector::hive::HiveConfig::kS3LogLevel, awsSdkLogLevel);
+  hiveConf->setValue(facebook::velox::connector::hive::HiveConfig::kS3MaxAttempts, retryMaxAttempts);
+  hiveConf->setValue(facebook::velox::connector::hive::HiveConfig::kS3RetryMode, retryMode);
+  hiveConf->setValue(facebook::velox::connector::hive::HiveConfig::kS3MaxConnections, maxConnections);
+  hiveConf->setValue(facebook::velox::connector::hive::HiveConfig::kS3ConnectTimeout, connectTimeout);
 #endif
 
 #ifdef ENABLE_GCS
