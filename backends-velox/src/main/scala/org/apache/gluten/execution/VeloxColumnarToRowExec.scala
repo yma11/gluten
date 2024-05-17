@@ -158,13 +158,14 @@ object VeloxColumnarToRowExec {
           val rows = batch.numRows()
           val beforeConvert = System.currentTimeMillis()
           val batchHandle = ColumnarBatches.getNativeHandle(batch)
-          val info =
-            jniWrapper.nativeColumnarToRowConvert(batchHandle, c2rId)
+          var info =
+            jniWrapper.nativeColumnarToRowConvert(batchHandle, c2rId, 0)
 
           convertTime += (System.currentTimeMillis() - beforeConvert)
 
           new Iterator[InternalRow] {
             var rowId = 0
+            var baseLength = 0
             val row = new UnsafeRow(cols)
 
             override def hasNext: Boolean = {
@@ -172,7 +173,14 @@ object VeloxColumnarToRowExec {
             }
 
             override def next: UnsafeRow = {
-              val (offset, length) = (info.offsets(rowId), info.lengths(rowId))
+              if (rowId == baseLength + info.lengths.length) {
+                baseLength += info.lengths.length
+                val before = System.currentTimeMillis()
+                info = jniWrapper.nativeColumnarToRowConvert(batchHandle, c2rId, rowId)
+                convertTime += (System.currentTimeMillis() - before)
+              }
+              val (offset, length) =
+                (info.offsets(rowId - baseLength), info.lengths(rowId - baseLength))
               row.pointTo(null, info.memoryAddress + offset, length)
               rowId += 1
               row

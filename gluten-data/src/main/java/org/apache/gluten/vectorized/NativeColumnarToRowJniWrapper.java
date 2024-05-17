@@ -38,8 +38,8 @@ public class NativeColumnarToRowJniWrapper implements RuntimeAware {
 
   public native long nativeColumnarToRowInit(long memoryManagerHandle) throws RuntimeException;
 
-  public native NativeColumnarToRowInfo nativeColumnarToRowConvert(long batchHandle, long c2rHandle)
-      throws RuntimeException;
+  public native NativeColumnarToRowInfo nativeColumnarToRowConvert(
+      long batchHandle, long c2rHandle, long rowId) throws RuntimeException;
 
   public native void nativeClose(long c2rHandle);
 }

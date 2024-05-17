@@ -20,7 +20,7 @@ import org.apache.gluten.columnarbatch.ColumnarBatches
 import org.apache.gluten.memory.arrow.alloc.ArrowBufferAllocators
 import org.apache.gluten.memory.nmm.NativeMemoryManagers
 import org.apache.gluten.utils.Iterators
-import org.apache.gluten.vectorized.{ArrowWritableColumnVector, NativeColumnarToRowInfo, NativeColumnarToRowJniWrapper, NativePartitioning}
+import org.apache.gluten.vectorized.{ArrowWritableColumnVector, NativeColumnarToRowJniWrapper, NativePartitioning}
 
 import org.apache.spark.{Partitioner, RangePartitioner, ShuffleDependency}
 import org.apache.spark.rdd.RDD
@@ -42,17 +42,17 @@ object ExecUtil {
 
   def convertColumnarToRow(batch: ColumnarBatch): Iterator[InternalRow] = {
     val jniWrapper = NativeColumnarToRowJniWrapper.create()
-    var info: NativeColumnarToRowInfo = null
     val batchHandle = ColumnarBatches.getNativeHandle(batch)
     val c2rHandle = jniWrapper.nativeColumnarToRowInit(
       NativeMemoryManagers
         .contextInstance("ExecUtil#ColumnarToRow")
         .getNativeInstanceHandle)
-    info = jniWrapper.nativeColumnarToRowConvert(batchHandle, c2rHandle)
+    var info = jniWrapper.nativeColumnarToRowConvert(batchHandle, c2rHandle, 0)
 
     Iterators
       .wrap(new Iterator[InternalRow] {
         var rowId = 0
+        var baseLength = 0
         val row = new UnsafeRow(batch.numCols())
 
         override def hasNext: Boolean = {
@@ -61,7 +61,12 @@ object ExecUtil {
 
         override def next: UnsafeRow = {
           if (rowId >= batch.numRows()) throw new NoSuchElementException
-          val (offset, length) = (info.offsets(rowId), info.lengths(rowId))
+          if (rowId == baseLength + info.lengths.length) {
+            baseLength += info.lengths.length
+            info = jniWrapper.nativeColumnarToRowConvert(batchHandle, c2rHandle, rowId)
+          }
+          val (offset, length) =
+            (info.offsets(rowId - baseLength), info.lengths(rowId - baseLength))
           row.pointTo(null, info.memoryAddress + offset, length.toInt)
           rowId += 1
           row

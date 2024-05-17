@@ -140,8 +140,8 @@ case class ColumnarBuildSideRelation(output: Seq[Attribute], batches: Array[Arra
           } else {
             val cols = batch.numCols()
             val rows = batch.numRows()
-            val info =
-              jniWrapper.nativeColumnarToRowConvert(batchHandle, c2rId)
+            var info =
+              jniWrapper.nativeColumnarToRowConvert(batchHandle, c2rId, 0)
             batch.close()
             val columnNames = key.flatMap {
               case expression: AttributeReference =>
@@ -188,6 +188,7 @@ case class ColumnarBuildSideRelation(output: Seq[Attribute], batches: Array[Arra
 
             new Iterator[InternalRow] {
               var rowId = 0
+              var baseLength = 0
               val row = new UnsafeRow(cols)
 
               override def hasNext: Boolean = {
@@ -196,8 +197,12 @@ case class ColumnarBuildSideRelation(output: Seq[Attribute], batches: Array[Arra
 
               override def next: UnsafeRow = {
                 if (rowId >= rows) throw new NoSuchElementException
-
-                val (offset, length) = (info.offsets(rowId), info.lengths(rowId))
+                if (rowId == baseLength + info.lengths.length) {
+                  baseLength += info.lengths.length
+                  info = jniWrapper.nativeColumnarToRowConvert(batchHandle, c2rId, rowId)
+                }
+                val (offset, length) =
+                  (info.offsets(rowId - baseLength), info.lengths(rowId - baseLength))
                 row.pointTo(null, info.memoryAddress + offset, length.toInt)
                 rowId += 1
                 row
