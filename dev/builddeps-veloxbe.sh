@@ -36,7 +36,7 @@ VELOX_BRANCH=""
 VELOX_HOME=""
 VELOX_PARAMETER=""
 COMPILE_ARROW_JAVA=ON
-SPARK_VERSION=ALL
+SPARK_VERSION=3.2
 
 # set default number of threads as cpu cores minus 2
 if [[ "$(uname)" == "Darwin" ]]; then
