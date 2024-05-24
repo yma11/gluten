@@ -10,12 +10,4 @@ function build_for_spark {
 
 cd $GLUTEN_DIR
 
-# SPARK_VERSION is defined in builddeps-veloxbe.sh
-if [ "$SPARK_VERSION" = "ALL" ]; then
-  for spark_version in 3.2 3.3 3.4 3.5
-  do
-    build_for_spark $spark_version
-  done
-else
-  build_for_spark $SPARK_VERSION
-fi
+build_for_spark 3.2
