@@ -28,6 +28,7 @@
 #include "velox/common/memory/MemoryPool.h"
 #include "velox/common/memory/MmapAllocator.h"
 #include "velox/core/Config.h"
+#include "velox/memory/VeloxListenableMmapAllocator.h"
 
 namespace gluten {
 /// As a static instance in per executor, initialized at executor startup.
@@ -51,7 +52,11 @@ class VeloxBackend {
 
   static VeloxBackend* get();
 
+  void setAsyncDataCache(int64_t memCacheSize, gluten::VeloxListenableMmapAllocator* allocator);
+
   facebook::velox::cache::AsyncDataCache* getAsyncDataCache() const;
+
+  uint64_t shrinkAsyncDataCache(uint64_t size) const;
 
   std::shared_ptr<facebook::velox::Config> getBackendConf() const {
     return backendConf_;
@@ -70,7 +75,6 @@ class VeloxBackend {
   }
 
   void init(const std::unordered_map<std::string, std::string>& conf);
-  void initCache();
   void initConnector();
   void initUdf();
 
@@ -87,7 +91,6 @@ class VeloxBackend {
 
   std::unique_ptr<folly::IOThreadPoolExecutor> ssdCacheExecutor_;
   std::unique_ptr<folly::IOThreadPoolExecutor> ioExecutor_;
-  std::shared_ptr<facebook::velox::memory::MmapAllocator> cacheAllocator_;
 
   std::string cachePathPrefix_;
   std::string cacheFilePrefix_;

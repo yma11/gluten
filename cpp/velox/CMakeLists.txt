@@ -303,6 +303,7 @@ set(VELOX_SRCS
     memory/BufferOutputStream.cc
     memory/VeloxColumnarBatch.cc
     memory/VeloxMemoryManager.cc
+    memory/VeloxListenableMmapAllocator.cc
     operators/functions/RegistrationAllFunctions.cc
     operators/functions/RowConstructorWithNull.cc
     operators/functions/SparkTokenizer.cc
@@ -352,6 +353,7 @@ target_include_directories(velox PUBLIC
     ${CMAKE_SYSTEM_INCLUDE_PATH}
     ${JNI_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../
     ${VELOX_HOME}/
     ${VELOX_BUILD_PATH}/
     ${VELOX_BUILD_PATH}/_deps/xsimd-src/include/
