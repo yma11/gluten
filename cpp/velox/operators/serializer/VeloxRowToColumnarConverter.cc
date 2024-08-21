@@ -72,11 +72,7 @@ VectorPtr createFlatVector(
   auto typeWidth = sizeof(T);
   auto column = BaseVector::create<FlatVector<T>>(type, numRows, pool);
   auto rawValues = column->template mutableRawValues<uint8_t>();
-#if defined(__x86_64__)
-  auto shift = _tzcnt_u32(typeWidth);
-#else
   auto shift = __builtin_ctz((uint32_t)typeWidth);
-#endif
   for (auto pos = 0; pos < numRows; pos++) {
     if (!isNull(memoryAddress + offsets[pos], columnIdx)) {
       const uint8_t* srcptr = (memoryAddress + offsets[pos] + fieldOffset);
@@ -101,11 +97,7 @@ VectorPtr createFlatVector<TypeKind::HUGEINT>(
   auto column = BaseVector::create<FlatVector<int128_t>>(type, numRows, pool);
   auto rawValues = column->mutableRawValues<uint8_t>();
   auto typeWidth = sizeof(int128_t);
-#if defined(__x86_64__)
-  auto shift = _tzcnt_u32(typeWidth);
-#else
   auto shift = __builtin_ctz((uint32_t)typeWidth);
-#endif
   for (auto pos = 0; pos < numRows; pos++) {
     if (!isNull(memoryAddress + offsets[pos], columnIdx)) {
       uint8_t* destptr = rawValues + (pos << shift);
