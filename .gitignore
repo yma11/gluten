@@ -98,3 +98,10 @@ dist/
 
 # For Hive
 metastore_db/
+
+
+
+# build arrow
+dev/arrow_ep/
+ep/_ep/
+
